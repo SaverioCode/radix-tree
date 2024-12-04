@@ -28,7 +28,7 @@ int main(void)
         }
     }
 
-    tree.debug(tree.getRoot());
+    tree.printTree(tree.getRoot());
 
     std::string* out = (std::string*)tree.find("ciwauaa");
     if (out != NULL) {

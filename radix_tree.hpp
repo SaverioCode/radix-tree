@@ -39,7 +39,7 @@ class RadixTree
         bool insert(const std::string& value, const T* data, bool replace = false);
 
     #ifdef DEBUG    
-        void debug(Node* root, const std::string& prefix = "");
+        void printTree(Node* root, const std::string& prefix = "");
         Node* getRoot() const;
     #endif
 
@@ -173,7 +173,7 @@ T* RadixTree<T>::_findPrefix(const Node* node, const std::string& value)
 
 #ifdef DEBUG
 template<typename T>
-void RadixTree<T>::debug(Node* root, const std::string& prefix)
+void RadixTree<T>::printTree(Node* root, const std::string& prefix)
 {
     if (root == nullptr) return;
 
