@@ -4,7 +4,7 @@
 
 int main(void)
 {
-    RadixTree tree;
+    RadixTree<std::string> tree;
 
     if (tree.insert("ciao", NULL) == false) {
         std::cerr << "fucking not working" << std::endl;
