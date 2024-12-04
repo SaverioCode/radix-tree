@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <string>
 #include <unordered_map>
-#include <utility>
 
 template<typename T>
 class RadixTree
@@ -111,7 +110,7 @@ template<typename T>
 RadixTree<T>::RadixTree(const RadixTree&& other)
 {
     _root = other._root;
-    cast_const<RadixTree&&>(other)._root = new Node();
+    const_cast<RadixTree&&>(other)._root = new Node();
 }
 
 template<typename T>
@@ -188,7 +187,7 @@ void RadixTree<T>::debug(Node* root, const std::string& prefix)
 }
 
 template<typename T>
-RadixTree<T>::Node* RadixTree<T>::getRoot() const
+typename RadixTree<T>::Node* RadixTree<T>::getRoot() const
 {
     return _root;
 }
@@ -212,7 +211,7 @@ bool RadixTree<T>::_insert(Node* root, Node* node, bool replace)
 {
     auto it = root->map->find(node->value[0]);
     if (it == root->map->end()) {
-        return root->map->insert(std::pair<char, Node*>(node->value[0], node)).second;
+        return root->map->insert({node->value[0], node}).second;
     }
     else {
         root = it->second;
@@ -245,12 +244,12 @@ void RadixTree<T>::_split(Node* root, Node* node, uint32_t index)
     new_node->is_end = root->is_end;
 
     if (index < node->value.size()) {
-        root->value.resize(index);
         root->data = nullptr;
         root->is_end = false;
         std::unordered_map<char, Node*>* map = new_node->map;
         new_node->map = root->map;
         root->map = map;
+        root->value.resize(index);
         node->value = &node->value[index];
         _insert(root, node, true);
     }
