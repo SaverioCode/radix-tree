@@ -2,7 +2,6 @@
 #define RADIX_TREE_HPP
 
 #include <cstdint>
-#include <iostream>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -15,13 +14,17 @@ class RadixTree
     struct Node
     {
         Node();
+        Node(const Node& other) = delete;
+        Node(const Node&& other);
         Node(const std::string& value, const T* data, bool is_end);
         ~Node();
 
-        std::string                      value;
+        Node& operator=(const Node& other) = delete;
+
         T*                               data;
         bool                             is_end;
         std::unordered_map<char, Node*>* map;
+        std::string                      value;
     };
 
     public:
@@ -32,9 +35,9 @@ class RadixTree
 
         RadixTree& operator=(const RadixTree& other) = delete;
 
-        bool insert(const std::string& value, const T* data, bool replace = false);
-        T*   findPrefix(const std::string& value);      
         T*   find(const std::string& value);
+        T*   findPrefix(const std::string& value);      
+        bool insert(const std::string& value, const T* data, bool replace = false);
 
     #ifdef DEBUG    
         void debug(Node* root, const std::string& prefix = "");
@@ -44,30 +47,40 @@ class RadixTree
     private:
         Node* _root;
 
-        T*       _findPrefix(const Node* node, const std::string& value);
-        T*       _find(const Node* node, const std::string& value);
         uint32_t _compare(const std::string& value1, const std::string& value2);
+        T*       _find(const Node* node, const std::string& value);
+        T*       _findPrefix(const Node* node, const std::string& value);
         bool     _insert(Node* root, Node* node, bool replace);
         void     _split(Node* root, Node* node, uint32_t index);
-        void     _move(Node* dest, Node* src);
 };
 
 /************** NODE *************/
 template<typename T>
 RadixTree<T>::Node::Node()
 {
-    data  = nullptr;
+    data   = nullptr;
     is_end = false;
-    map = new std::unordered_map<char, Node*>();
+    map    = new std::unordered_map<char, Node*>();
 }
 
 template<typename T>
 RadixTree<T>::Node::Node(const std::string& value, const T* data, bool is_end)
 {
-    this->value = value;
-    this->data = const_cast<T*>(data);
+    this->value  = value;
+    this->data   = const_cast<T*>(data);
     this->is_end = is_end;
-    this->map = new std::unordered_map<char, Node*>();
+    this->map    = new std::unordered_map<char, Node*>();
+}
+
+template<typename T>
+RadixTree<T>::Node::Node(const Node&& other)
+{
+    this->data   = other.data;
+    this->is_end = other.is_end;
+    this->map    = other.map;
+    this->value  = other.value;
+    const_cast<Node&&>(other).data = nullptr;
+    const_cast<Node&&>(other).map  = nullptr;
 }
 
 template<typename T>
@@ -136,7 +149,6 @@ T* RadixTree<T>::findPrefix(const std::string& value)
 {
     auto it = _root->map->find(value[0]);
     if (it == _root->map->end()) {
-        std::cout << "main root fail findPrefix" << std::endl;
         return _root->is_end ? _root->data : nullptr;
     }
     return _findPrefix(it->second, value);
@@ -227,38 +239,29 @@ bool RadixTree<T>::_insert(Node* root, Node* node, bool replace)
 template<typename T>
 void RadixTree<T>::_split(Node* root, Node* node, uint32_t index)
 {
-    Node* new_node = new Node();
-    new_node->value = &root->value[index];
-    new_node->data = root->data;
+    Node* new_node   = new Node();
+    new_node->value  = &root->value[index];
+    new_node->data   = root->data;
     new_node->is_end = root->is_end;
 
     if (index < node->value.size()) {
-        root->value = root->value.substr(0, index);
+        root->value.resize(index);
         root->data = nullptr;
         root->is_end = false;
         std::unordered_map<char, Node*>* map = new_node->map;
         new_node->map = root->map;
         root->map = map;
         node->value = &node->value[index];
-        _insert(root, new_node, true);
         _insert(root, node, true);
     }
     else {
-        _move(root, node);
+        root->data = node->data;
+        node->data = nullptr;
+        root->value = node->value;
+        root->is_end = node->is_end;
         delete node;
-        _insert(root, new_node, true);
     }
-}
-
-template<typename T>
-void RadixTree<T>::_move(Node* dest, Node* src)
-{
-    dest->value = src->value;
-    src->value.clear();
-    delete dest->data;
-    dest->data = src->data;
-    src->data = nullptr;
-    dest->is_end = src->is_end;
+    _insert(root, new_node, true);
 }
 
 #endif

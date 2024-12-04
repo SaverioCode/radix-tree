@@ -1,44 +1,33 @@
 #include <iostream>
+#include <utility>
+#include <vector>
 
 #include <radix_tree.hpp>
+
+#define ERR_MSG_INSERT "Failed to insert value"
 
 int main(void)
 {
     RadixTree<std::string> tree;
+    std::vector<std::pair<std::string, std::string*>> value_data;
 
-    if (tree.insert("ciao", NULL) == false) {
-        std::cerr << "fucking not working" << std::endl;
-    }
-    if (tree.insert("cia", NULL) == false) {
-        std::cerr << "fucking not working" << std::endl;
-    }
-    if (tree.insert("ciaone", NULL) == false) {
-        std::cerr << "fucking not working" << std::endl;
-    }
-    if (tree.insert("ciaoo", NULL) == false) {
-        std::cerr << "fucking not working" << std::endl;
-    }
-    std::string* str = new std::string("ciwaua data");
-    if (tree.insert("ciwaua", str) == false) {
-        std::cerr << "fucking not working" << std::endl;
-    }
-    if (tree.insert("ci", NULL) == false) {
-        std::cerr << "fucking not working" << std::endl;
-    }
-    if (tree.insert("cia", NULL) == false) {
-        std::cerr << "fucking not working" << std::endl;
-    }
-    if (tree.insert("ciavatta", NULL) == false) {
-        std::cerr << "fucking not working" << std::endl;
-    }
-    if (tree.insert("ciaonebellodecasa", NULL) == false) {
-        std::cerr << "fucking not working" << std::endl;
-    }
-    if (tree.insert("ciaonebedda", NULL) == false) {
-        std::cerr << "fucking not working" << std::endl;
+    value_data.push_back({"ciao", NULL});
+    value_data.push_back({"cia", NULL});
+    value_data.push_back({"ciaone", NULL});
+    value_data.push_back({"ciaoo", NULL});
+    value_data.push_back({"ciwaua", new std::string("ciwaua data")});
+    value_data.push_back({"ci", NULL});
+    value_data.push_back({"cia", NULL});
+    value_data.push_back({"ciavatta", NULL});
+    value_data.push_back({"ciaonebellodecasa", NULL});
+    value_data.push_back({"ciaonebedda", NULL});
+
+    for (auto& p : value_data) {
+        if (tree.insert(p.first, p.second) == false) {
+            std::cerr << ERR_MSG_INSERT << std::endl;
+        }
     }
 
-    
     tree.debug(tree.getRoot());
 
     std::string* out = (std::string*)tree.find("ciwauaa");
