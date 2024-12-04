@@ -26,11 +26,11 @@ class RadixTree
 
     public:
         RadixTree();
-        RadixTree(const RadixTree& other);
+        RadixTree(const RadixTree& other) = delete;
         RadixTree(const RadixTree&& other);
         ~RadixTree();
 
-        RadixTree& operator=(const RadixTree& other);
+        RadixTree& operator=(const RadixTree& other) = delete;
 
         bool insert(const std::string& value, const T* data, bool replace = false);
         T*   findPrefix(const std::string& value);      
@@ -56,7 +56,7 @@ class RadixTree
 template<typename T>
 RadixTree<T>::Node::Node()
 {
-    data  = NULL;
+    data  = nullptr;
     is_end = false;
     map = new std::unordered_map<char, Node*>();
 }
@@ -93,6 +93,13 @@ RadixTree<T>::~RadixTree()
 {
     delete _root;
 }
+        
+template<typename T>
+RadixTree<T>::RadixTree(const RadixTree&& other)
+{
+    _root = other._root;
+    cast_const<RadixTree&&>(other)._root = new Node();
+}
 
 template<typename T>
 bool RadixTree<T>::insert(const std::string& value, const T* data, bool replace)
@@ -105,7 +112,7 @@ T* RadixTree<T>::find(const std::string& value)
 {
     auto it = _root->map->find(value[0]);
     if (it == _root->map->end()) {
-        return NULL;
+        return nullptr;
     }
     return _find(it->second, value);
 }
@@ -119,7 +126,7 @@ T* RadixTree<T>::_find(const Node* node, const std::string& value)
     }
     auto it = node->map->find(value[index]);
     if (it == node->map->end()) {
-        return NULL;
+        return nullptr;
     }
     return _find(it->second, &value[index]);
 }
@@ -130,7 +137,7 @@ T* RadixTree<T>::findPrefix(const std::string& value)
     auto it = _root->map->find(value[0]);
     if (it == _root->map->end()) {
         std::cout << "main root fail findPrefix" << std::endl;
-        return _root->is_end ? _root->data : NULL;
+        return _root->is_end ? _root->data : nullptr;
     }
     return _findPrefix(it->second, value);
 }
@@ -140,15 +147,15 @@ T* RadixTree<T>::_findPrefix(const Node* node, const std::string& value)
 {
     uint32_t index = _compare(node->value, value);
     if (index == 0) {
-        return node->is_end ? node->data : NULL;
+        return node->is_end ? node->data : nullptr;
     }
     auto it = node->map->find(value[index]);
     if (it == node->map->end()) {
-        return node->is_end ? node->data : NULL;
+        return node->is_end ? node->data : nullptr;
     }
     T* data = _findPrefix(it->second, &value[index]);
-    if (data == NULL) {
-        return node->is_end ? node->data : NULL;
+    if (data == nullptr) {
+        return node->is_end ? node->data : nullptr;
     }
     return data;
 }
@@ -157,7 +164,7 @@ T* RadixTree<T>::_findPrefix(const Node* node, const std::string& value)
 template<typename T>
 void RadixTree<T>::debug(Node* root, const std::string& prefix)
 {
-    if (root == NULL) return;
+    if (root == nullptr) return;
 
     if (!root->value.empty()) {
         std::cout << prefix << root->value << (root->is_end ? " [END]" : "") << "\n";
@@ -203,7 +210,7 @@ bool RadixTree<T>::_insert(Node* root, Node* node, bool replace)
             if (ret) {
                 root->data = node->data;
                 root->is_end = node->is_end;
-                node->data = NULL;
+                node->data = nullptr;
             }
             delete node;
             return ret;
@@ -227,7 +234,7 @@ void RadixTree<T>::_split(Node* root, Node* node, uint32_t index)
 
     if (index < node->value.size()) {
         root->value = root->value.substr(0, index);
-        root->data = NULL;
+        root->data = nullptr;
         root->is_end = false;
         std::unordered_map<char, Node*>* map = new_node->map;
         new_node->map = root->map;
@@ -250,7 +257,7 @@ void RadixTree<T>::_move(Node* dest, Node* src)
     src->value.clear();
     delete dest->data;
     dest->data = src->data;
-    src->data = NULL;
+    src->data = nullptr;
     dest->is_end = src->is_end;
 }
 
