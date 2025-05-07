@@ -18,7 +18,8 @@ class RadixTree
         Node(const std::string& value, const T* data, bool is_end);
         ~Node();
 
-        Node& operator=(const Node& other) = delete;
+        Node& operator=(const Node& other) = delete; // Todo: force move?
+        // Todo: implemente operator==
 
         T*                               data;
         bool                             is_end;
@@ -34,23 +35,23 @@ class RadixTree
 
         RadixTree& operator=(const RadixTree& other) = delete;
 
-        T*   find(const std::string& value);
-        T*   findPrefix(const std::string& value);      
-        bool insert(const std::string& value, const T* data, bool replace = false);
+        T*   find(const std::string& value) const noexcept;
+        T*   findPrefix(const std::string& value) const noexcept;
+        bool insert(const std::string& value, const T* data, bool replace = false) noexcept;
 
     #ifdef DEBUG    
-        void printTree(Node* root, const std::string& prefix = "");
-        Node* getRoot() const;
+        void printTree(Node* root, const std::string& prefix = "") const noexcept;
+        Node* getRoot() const const noexcept;
     #endif
 
     private:
         Node* _root;
 
-        uint32_t _compare(const std::string& value1, const std::string& value2);
-        T*       _find(const Node* node, const std::string& value);
-        T*       _findPrefix(const Node* node, const std::string& value);
-        bool     _insert(Node* root, Node* node, bool replace);
-        void     _split(Node* root, Node* node, uint32_t index);
+        uint32_t _compare(const std::string& value1, const std::string& value2) const noexcept;
+        T*       _find(const Node* node, const std::string& value) const noexcept;
+        T*       _findPrefix(const Node* node, const std::string& value) const noexcept;
+        bool     _insert(Node* root, Node* node, bool replace) noexcept;
+        void     _split(Node* root, Node* node, uint32_t index) noexcept;
 };
 
 /************** NODE *************/
@@ -114,13 +115,13 @@ RadixTree<T>::RadixTree(const RadixTree&& other)
 }
 
 template<typename T>
-bool RadixTree<T>::insert(const std::string& value, const T* data, bool replace)
+bool RadixTree<T>::insert(const std::string& value, const T* data, bool replace) noexcept
 {
     return _insert(_root, new Node(value, data, true), replace);
 }
 
 template<typename T>
-T* RadixTree<T>::find(const std::string& value)
+T* RadixTree<T>::find(const std::string& value) const noexcept
 {
     auto it = _root->map->find(value[0]);
     if (it == _root->map->end()) {
@@ -130,7 +131,7 @@ T* RadixTree<T>::find(const std::string& value)
 }
 
 template<typename T>
-T* RadixTree<T>::_find(const Node* node, const std::string& value)
+T* RadixTree<T>::_find(const Node* node, const std::string& value) const noexcept
 {
     uint32_t index = _compare(node->value, value);
     if (index == 0) {
@@ -144,7 +145,7 @@ T* RadixTree<T>::_find(const Node* node, const std::string& value)
 }
 
 template<typename T>
-T* RadixTree<T>::findPrefix(const std::string& value)
+T* RadixTree<T>::findPrefix(const std::string& value) const noexcept
 {
     auto it = _root->map->find(value[0]);
     if (it == _root->map->end()) {
@@ -154,7 +155,7 @@ T* RadixTree<T>::findPrefix(const std::string& value)
 }
 
 template<typename T>
-T* RadixTree<T>::_findPrefix(const Node* node, const std::string& value)
+T* RadixTree<T>::_findPrefix(const Node* node, const std::string& value) const noexcept
 {
     uint32_t index = _compare(node->value, value);
     if (index == 0) {
@@ -173,7 +174,7 @@ T* RadixTree<T>::_findPrefix(const Node* node, const std::string& value)
 
 #ifdef DEBUG
 template<typename T>
-void RadixTree<T>::printTree(Node* root, const std::string& prefix)
+void RadixTree<T>::printTree(Node* root, const std::string& prefix) const noexcept
 {
     if (root == nullptr) return;
 
@@ -187,14 +188,14 @@ void RadixTree<T>::printTree(Node* root, const std::string& prefix)
 }
 
 template<typename T>
-typename RadixTree<T>::Node* RadixTree<T>::getRoot() const
+typename RadixTree<T>::Node* RadixTree<T>::getRoot() const noexcept
 {
     return _root;
 }
 #endif
 
 template<typename T>
-uint32_t RadixTree<T>::_compare(const std::string& value1, const std::string& value2)
+uint32_t RadixTree<T>::_compare(const std::string& value1, const std::string& value2) const noexcept
 {
     uint32_t i = 0;
     while (i < value1.size() && i < value2.size()) {
@@ -207,7 +208,7 @@ uint32_t RadixTree<T>::_compare(const std::string& value1, const std::string& va
 }
 
 template<typename T>
-bool RadixTree<T>::_insert(Node* root, Node* node, bool replace)
+bool RadixTree<T>::_insert(Node* root, Node* node, bool replace) noexcept
 {
     auto it = root->map->find(node->value[0]);
     if (it == root->map->end()) {
@@ -236,7 +237,7 @@ bool RadixTree<T>::_insert(Node* root, Node* node, bool replace)
 }
 
 template<typename T>
-void RadixTree<T>::_split(Node* root, Node* node, uint32_t index)
+void RadixTree<T>::_split(Node* root, Node* node, uint32_t index) noexcept
 {
     Node* new_node   = new Node();
     new_node->value  = &root->value[index];
