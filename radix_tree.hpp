@@ -21,7 +21,6 @@ class RadixTree
 
         Node& operator=(const Node& other) = delete;
         Node& operator=(Node&& other) noexcept;
-        // Todo: implemente operator==
 
         T*                               data;
         bool                             is_end;
@@ -37,8 +36,6 @@ class RadixTree
 
         RadixTree& operator=(const RadixTree& other) = delete;
         RadixTree& operator=(RadixTree&& other) noexcept;
-
-        // Todo: remove operator==?
 
         T*   find(const std::string& value) const noexcept;
         T*   findPrefix(const std::string& value) const noexcept;
