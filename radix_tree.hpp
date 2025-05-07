@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <string>
 #include <unordered_map>
+#include <utility>
 
 template<typename T>
 class RadixTree
@@ -12,13 +13,14 @@ class RadixTree
 
     struct Node
     {
-        Node();
+        Node() noexcept;
         Node(const Node& other) = delete;
-        Node(const Node&& other);
-        Node(const std::string& value, const T* data, bool is_end);
-        ~Node();
+        Node(Node&& other) noexcept;
+        Node(const std::string& value, const T* data, bool is_end) noexcept;
+        ~Node() noexcept;
 
         Node& operator=(const Node& other) = delete; // Todo: force move?
+        Node& operator=(Node&& other) noexcept;
         // Todo: implemente operator==
 
         T*                               data;
@@ -28,12 +30,15 @@ class RadixTree
     };
 
     public:
-        RadixTree();
+        RadixTree() noexcept;
         RadixTree(const RadixTree& other) = delete;
-        RadixTree(const RadixTree&& other);
-        ~RadixTree();
+        RadixTree(RadixTree&& other) noexcept;
+        ~RadixTree() noexcept;
 
         RadixTree& operator=(const RadixTree& other) = delete;
+        RadixTree& operator=(RadixTree&& other) noexcept;
+
+        // Todo: remove operator==?
 
         T*   find(const std::string& value) const noexcept;
         T*   findPrefix(const std::string& value) const noexcept;
@@ -56,7 +61,7 @@ class RadixTree
 
 /************** NODE *************/
 template<typename T>
-RadixTree<T>::Node::Node()
+RadixTree<T>::Node::Node() noexcept
 {
     data   = nullptr;
     is_end = false;
@@ -64,7 +69,7 @@ RadixTree<T>::Node::Node()
 }
 
 template<typename T>
-RadixTree<T>::Node::Node(const std::string& value, const T* data, bool is_end)
+RadixTree<T>::Node::Node(const std::string& value, const T* data, bool is_end) noexcept
 {
     this->value  = value;
     this->data   = const_cast<T*>(data);
@@ -73,18 +78,24 @@ RadixTree<T>::Node::Node(const std::string& value, const T* data, bool is_end)
 }
 
 template<typename T>
-RadixTree<T>::Node::Node(const Node&& other)
+RadixTree<T>::Node::Node(Node&& other) noexcept
 {
-    this->data   = other.data;
-    this->is_end = other.is_end;
-    this->map    = other.map;
-    this->value  = other.value;
-    const_cast<Node&&>(other).data = nullptr;
-    const_cast<Node&&>(other).map  = nullptr;
+    *this = std::move(other);
 }
 
 template<typename T>
-RadixTree<T>::Node::~Node()
+typename RadixTree<T>::Node& RadixTree<T>::Node::operator=(Node&& other) noexcept
+{
+    this->data   = std::move(other.data);
+    this->is_end = std::move(other.is_end);
+    this->map    = std::move(other.map);
+    this->value  = std::move(other.value);
+    other.data = nullptr;
+    other.map  = nullptr;
+}
+
+template<typename T>
+RadixTree<T>::Node::~Node() noexcept
 {
     delete data;
     for (auto it = map->begin(); it != map->end(); it++) {
@@ -96,22 +107,29 @@ RadixTree<T>::Node::~Node()
 /************** RADIX-TREE *************/
 
 template<typename T>
-RadixTree<T>::RadixTree()
+RadixTree<T>::RadixTree() noexcept
 {
     _root = new Node();
 }
 
 template<typename T>
-RadixTree<T>::~RadixTree()
+RadixTree<T>::~RadixTree() noexcept
 {
     delete _root;
 }
         
 template<typename T>
-RadixTree<T>::RadixTree(const RadixTree&& other)
+RadixTree<T>::RadixTree(RadixTree&& other) noexcept
 {
-    _root = other._root;
-    const_cast<RadixTree&&>(other)._root = new Node();
+    *this = std::move(other);
+}
+
+template<typename T>
+RadixTree<T>& RadixTree<T>::operator=(RadixTree&& other) noexcept
+{
+    _root = std::move(other._root);
+    other._root = new Node();
+    return *this;
 }
 
 template<typename T>
