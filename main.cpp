@@ -23,18 +23,19 @@ int main(void)
     value_data.push_back({"ciaonebedda", nullptr});
 
     for (auto& p : value_data) {
-        if (tree.insert(p.first, p.second) == false) {
+        std::string tmp = p.second ? *p.second : "";
+        if (tree.insert(p.first, std::make_shared<std::string>(tmp)) == false) {
             std::cerr << ERR_MSG_INSERT << std::endl;
         }
     }
 
-    tree.printTree(tree.getRoot());
+    tree.printTree();
 
-    std::string* out = (std::string*)tree.find("ciwauaa");
+    auto out = tree.find("ciwauaa");
     if (out != nullptr) {
         std::cout << *out << std::endl;
     }
-    out = (std::string*)tree.findPrefix("ciwauaaaa");
+    out = tree.findPrefix("ciwauaaaa");
     if (out != nullptr) {
         std::cout << *out << std::endl;
     }
