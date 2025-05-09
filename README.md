@@ -3,7 +3,7 @@ This is a C++ implementation of a [RadixTree](https://en.wikipedia.org/wiki/Radi
 The design follows the RAII idiom, and the tree is fully templated to support reuse with any data type
 
 ## Requiriments
-- C++ 11 (or greater)
+- C++ 14 (or greater)
 
 ## Debug
 `RadixTree::printTree()` method to print the tree. Compile with `-D DEBUG`

@@ -10,10 +10,10 @@
 template <typename T>
 class RadixTree
 {
-    struct Node;
-
     struct Node
     {
+        typedef std::unordered_map<char, std::unique_ptr<Node>> HashMap;
+
         Node();
         Node(const Node& other) = delete;
         Node(Node&& other);
@@ -23,10 +23,12 @@ class RadixTree
         Node& operator=(const Node& other) = delete;
         Node& operator=(Node&& other);
 
-        std::shared_ptr<T>              data;
-        bool                            is_end;
-        std::string                     value;
-        std::unordered_map<char, Node>  map;
+        bool addNode(Node& node);
+
+        std::shared_ptr<T>  data;
+        bool                is_end;
+        std::string         value;
+        HashMap  			map;
     };
 
     public:
@@ -49,16 +51,16 @@ class RadixTree
     #endif
 
     private:
-        Node _root;
+        std::unique_ptr<Node> _root;
 
         uint32_t              _compare(const std::string& value1, const std::string& value2) const noexcept;
-        std::shared_ptr<T>    _find(const Node& node, const std::string& value) const noexcept;
-        std::shared_ptr<T>    _findPrefix(const Node& node, const std::string& value) const noexcept;
-        bool                  _insert(Node& root, Node& node, bool replace);
-        bool                  _split(Node& root, Node& node, uint32_t index);
+        std::shared_ptr<T>    _find(const std::unique_ptr<Node>& node, const std::string& value) const noexcept;
+        std::shared_ptr<T>    _findPrefix(const std::unique_ptr<Node>& node, const std::string& value) const noexcept;
+        bool                  _insert(std::unique_ptr<Node>& root, Node& node, bool replace);
+        bool                  _split(std::unique_ptr<Node>& root, Node& node, uint32_t index);
 
     #ifdef DEBUG
-       void _printTree(const Node& node, const std::string& prefix) const noexcept;
+       void _printTree(const std::unique_ptr<Node>& node, const std::string& prefix) const noexcept;
     #endif
 };
 
@@ -74,7 +76,7 @@ template <typename T>
 RadixTree<T>::Node::Node(const std::string& value, const std::shared_ptr<T>& data, bool is_end)
 {
     this->value  = value;
-    this->data = data;
+    this->data   = data ? std::make_shared<T>(*data) : nullptr;
     this->is_end = is_end;
 }
 
@@ -88,17 +90,26 @@ template <typename T>
 typename RadixTree<T>::Node& RadixTree<T>::Node::operator=(Node&& other)
 {
     this->data   = std::move(other.data);
-    this->is_end = std::move(other.is_end);
+    this->is_end = other.is_end;
     this->map    = std::move(other.map);
     this->value  = std::move(other.value);
-    other.data = nullptr;
+    other.is_end = false;
+    other.data   = nullptr;
     return *this;
+}
+
+template <typename T>
+bool RadixTree<T>::Node::addNode(Node& node)
+{
+    char key = node.value[0];
+
+    return map.emplace(key, std::make_unique<Node>(std::move(node))).second;
 }
 
 /************** RADIX-TREE *************/
 
 template <typename T>
-RadixTree<T>::RadixTree() : _root()
+RadixTree<T>::RadixTree() : _root(std::make_unique<Node>())
 {
 }
 
@@ -118,13 +129,16 @@ RadixTree<T>& RadixTree<T>::operator=(RadixTree&& other)
 template <typename T>
 void RadixTree<T>::clear() noexcept
 {
-    _root = Node();
+    _root->data.reset();
+    _root->value.clear();
+    _root->is_end = false;
+    _root->map.clear();
 }
 
 template <typename T>
 bool RadixTree<T>::contains(const std::string& key) const noexcept
 {
-    return find(key) != nullptr;
+    return find(key) != nullptr; // Todo: implement proper logic to differentiate when the T* is nullptr and when the key is not found
 }
 
 template <typename T>
@@ -137,23 +151,24 @@ bool RadixTree<T>::insert(const std::string& value, const std::shared_ptr<T>& da
 template <typename T>
 std::shared_ptr<T> RadixTree<T>::find(const std::string& value) const noexcept
 {
-    auto it = _root.map.find(value[0]);
-    if (it == _root.map.end()) {
+    auto it = _root->map.find(value[0]);
+    if (it == _root->map.end()) {
         return nullptr;
     }
     return _find(it->second, value);
 }
 
 template <typename T>
-std::shared_ptr<T> RadixTree<T>::_find(const Node& node, const std::string& value) const noexcept
+std::shared_ptr<T> RadixTree<T>::_find(const std::unique_ptr<Node>& node, const std::string& value) const noexcept
 {
-    uint32_t index = _compare(node.value, value);
+    uint32_t index = _compare(node->value, value);
     if (index == 0) {
-        return node.is_end ? node.data : nullptr;
+        return node->is_end ? node->data : nullptr;
     }
-    if (index >= value.size() || index < node.value.size()) return nullptr;
-    auto it = node.map.find(value[index]);
-    if (it == node.map.end()) {
+    if (index >= value.size() || index < node->value.size()) return nullptr;
+
+    auto it = node->map.find(value[index]);
+    if (it == node->map.end()) {
         return nullptr;
     }
     return _find(it->second, &value[index]);
@@ -162,28 +177,29 @@ std::shared_ptr<T> RadixTree<T>::_find(const Node& node, const std::string& valu
 template <typename T>
 std::shared_ptr<T> RadixTree<T>::findPrefix(const std::string& value) const noexcept
 {
-    auto it = _root.map.find(value[0]);
-    if (it == _root.map.end()) {
-        return _root.is_end ? _root.data : nullptr;
+    auto it = _root->map.find(value[0]);
+    if (it == _root->map.end()) {
+        return _root->is_end ? _root->data : nullptr;
     }
     return _findPrefix(it->second, value);
 }
 
 template <typename T>
-std::shared_ptr<T> RadixTree<T>::_findPrefix(const Node& node, const std::string& value) const noexcept
+std::shared_ptr<T> RadixTree<T>::_findPrefix(const std::unique_ptr<Node>& node, const std::string& value) const noexcept
 {
-    uint32_t index = _compare(node.value, value);
+    uint32_t index = _compare(node->value, value);
     if (index == 0 || index >= value.size()) {
-        return node.is_end ? node.data : nullptr;
+        return node->is_end ? node->data : nullptr;
     }
-    if (index < node.value.size()) return nullptr;
-    auto it = node.map.find(value[index]);
-    if (it == node.map.end()) {
-        return node.is_end ? node.data : nullptr;
+    if (index < node->value.size()) return nullptr;
+
+    auto it = node->map.find(value[index]);
+    if (it == node->map.end()) {
+        return node->is_end ? node->data : nullptr;
     }
     std::shared_ptr<T> data = _findPrefix(it->second, &value[index]);
     if (data == nullptr) {
-        return node.is_end ? node.data : nullptr;
+        return node->is_end ? node->data : nullptr;
     }
     return data;
 }
@@ -196,13 +212,13 @@ void RadixTree<T>::printTree() const noexcept
 }
 
 template <typename T>
-void RadixTree<T>::_printTree(const Node& node, const std::string& prefix) const noexcept
+void RadixTree<T>::_printTree(const std::unique_ptr<Node>& node, const std::string& prefix) const noexcept
 {
-    if (!node.value.empty()) {
-        std::cout << prefix << node.value << (node.is_end ? " [END]" : "") << std::endl;
+    if (!node->value.empty()) {
+        std::cout << prefix << node->value << (node->is_end ? " [END]" : "") << std::endl;
     }
 
-    for (auto it = node.map.begin(); it != node.map.end(); it++) {
+    for (auto it = node->map.begin(); it != node->map.end(); it++) {
         _printTree(it->second, prefix + "     ");
     }
 }
@@ -223,43 +239,41 @@ uint32_t RadixTree<T>::_compare(const std::string& value1, const std::string& va
 }
 
 template <typename T>
-bool RadixTree<T>::_insert(Node& root, Node& node, bool replace)
+bool RadixTree<T>::_insert(std::unique_ptr<Node>& root, Node& node, bool replace)
 {
-    auto it = root.map.find(node.value[0]);
-    if (it == root.map.end()) {
-        return root.map.emplace(node.value[0], std::move(node)).second;
+    auto it = root->map.find(node.value[0]);
+    if (it == root->map.end()) {
+        return root->addNode(node);
     }
 
     auto& next = it->second;
-    uint32_t index = _compare(next.value, node.value);
+    uint32_t index = _compare(next->value, node.value);
     if (index == 0) {
-        if (next.is_end && !replace) return false;
+        if (next->is_end && !replace) return false;
 
-        next.data = std::move(node.data);
-        next.is_end = true;
+        next->data = std::move(node.data);
+        next->is_end = true;
         return true;
     }
-    if (index < next.value.size()) {
+    if (index < next->value.size()) {
         return _split(next, node, index);
     }
-    node.value = &node.value[index];
+    node.value = node.value.substr(index);
     return _insert(next, node, replace);
 }
 
 template <typename T>
-bool RadixTree<T>::_split(Node& root, Node& node, uint32_t index)
+bool RadixTree<T>::_split(std::unique_ptr<Node>& root, Node& node, uint32_t index)
 {
-    Node new_node(&root.value[index], root.data, root.is_end);
-    std::unordered_map<char, Node> tmp_map = std::move(root.map);
+    Node new_node(&root->value[index], std::move(root->data), root->is_end);
 
-    root.is_end = false;
-    root.data = nullptr;
-    new_node.map = std::move(root.map);
+    root->is_end = false;
+    root->data = nullptr;
+    new_node.map = std::move(root->map);
     if (index < node.value.size()) {
         node.value = node.value.substr(index);
     }
-    root.value = root.value.substr(0, index);
-    
+    root->value = root->value.substr(0, index);
 
     return (_insert(root, new_node, true) && _insert(root, node, true));
 }
