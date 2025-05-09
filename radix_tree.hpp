@@ -18,7 +18,7 @@ class RadixTree
         Node(const Node& other) = delete;
         Node(Node&& other);
         Node(const std::string& value, const std::shared_ptr<T>& data, bool is_end);
-        ~Node() noexcept;
+        ~Node() noexcept = default;
 
         Node& operator=(const Node& other) = delete;
         Node& operator=(Node&& other);
@@ -33,7 +33,7 @@ class RadixTree
         RadixTree();
         RadixTree(const RadixTree& other) = delete;
         RadixTree(RadixTree&& other);
-        ~RadixTree() noexcept;
+        ~RadixTree() noexcept = default;
 
         RadixTree& operator=(const RadixTree& other) = delete;
         RadixTree& operator=(RadixTree&& other);
@@ -95,11 +95,6 @@ typename RadixTree<T>::Node& RadixTree<T>::Node::operator=(Node&& other)
     return *this;
 }
 
-template <typename T>
-RadixTree<T>::Node::~Node() noexcept
-{
-}
-
 /************** RADIX-TREE *************/
 
 template <typename T>
@@ -107,11 +102,6 @@ RadixTree<T>::RadixTree() : _root()
 {
 }
 
-template <typename T>
-RadixTree<T>::~RadixTree() noexcept
-{
-}
-        
 template <typename T>
 RadixTree<T>::RadixTree(RadixTree&& other)
 {
