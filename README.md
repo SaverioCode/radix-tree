@@ -1,5 +1,5 @@
 # RadixTree
-This is an implementation in C++ of a [RadixTree](https://en.wikipedia.org/wiki/Radix_tree)  
+This is a C++ implementation of a [RadixTree](https://en.wikipedia.org/wiki/Radix_tree)  
 The design follows the RAII idiom, and the tree is fully templated to support reuse with any data type
 
 ## Requiriments
