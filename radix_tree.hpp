@@ -253,23 +253,16 @@ bool RadixTree<T>::_split(Node& root, Node& node, uint32_t index)
     Node new_node(&root.value[index], root.data, root.is_end);
     std::unordered_map<char, Node> tmp_map = std::move(root.map);
 
+    root.is_end = false;
     root.data = nullptr;
-    root.map = std::move(new_node.map);
-    new_node.map = std::move(tmp_map);
-
-    // Updated the value of the node to be inserted
+    new_node.map = std::move(root.map);
     if (index < node.value.size()) {
         node.value = node.value.substr(index);
     }
-
-    // Updated the value of the root node
     root.value = root.value.substr(0, index);
-    root.is_end = false;
+    
 
-    if (_insert(root, new_node, true) && _insert(root, node, true)) {
-        return true;
-    }
-    return false;
+    return (_insert(root, new_node, true) && _insert(root, node, true));
 }
 
 #endif
