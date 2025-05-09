@@ -76,7 +76,7 @@ template <typename T>
 RadixTree<T>::Node::Node(const std::string& value, const std::shared_ptr<T>& data, bool is_end)
 {
     this->value  = value;
-    this->data   = data ? std::make_shared<T>(*data) : nullptr;
+    this->data   = data;
     this->is_end = is_end;
 }
 
