@@ -229,22 +229,21 @@ bool RadixTree<T>::_insert(Node& root, Node& node, bool replace)
     if (it == root.map.end()) {
         return root.map.emplace(node.value[0], std::move(node)).second;
     }
-    else {
-        auto& next = it->second;
-        uint32_t index = _compare(next.value, node.value);
-        if (index == 0) {
-            if (next.is_end && !replace) return false;
 
-            next.data = std::move(node.data);
-            next.is_end = true;
-            return true;
-        }
-        if (index < next.value.size()) {
-            return _split(next, node, index);
-        }
-        node.value = &node.value[index];
-        return _insert(next, node, replace);
+    auto& next = it->second;
+    uint32_t index = _compare(next.value, node.value);
+    if (index == 0) {
+        if (next.is_end && !replace) return false;
+
+        next.data = std::move(node.data);
+        next.is_end = true;
+        return true;
     }
+    if (index < next.value.size()) {
+        return _split(next, node, index);
+    }
+    node.value = &node.value[index];
+    return _insert(next, node, replace);
 }
 
 template <typename T>
