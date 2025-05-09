@@ -6,6 +6,10 @@ The design follows the RAII idiom, and the tree is fully templated to support re
 - C++ 11 (or greater)
 
 ## Debug
-To use the `getRoot()` and `printTree()` method to print the entire tree compile with `-D DEBUG`
+`RadixTree::printTree()` method to print the tree. Compile with `-D DEBUG`
+
+## ToDo
+- [ ] remove method
 - [ ] trasverse method, in order to apply your custom function 
 - [ ] DOT graph
+- [ ] tests
