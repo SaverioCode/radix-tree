@@ -171,7 +171,7 @@ std::shared_ptr<T> RadixTree<T>::_find(const std::unique_ptr<Node>& node, const 
     if (it == node->map.end()) {
         return nullptr;
     }
-    return _find(it->second, &value[index]);
+    return _find(it->second, value.substr(index));
 }
 
 template <typename T>
@@ -197,7 +197,7 @@ std::shared_ptr<T> RadixTree<T>::_findPrefix(const std::unique_ptr<Node>& node, 
     if (it == node->map.end()) {
         return node->is_end ? node->data : nullptr;
     }
-    std::shared_ptr<T> data = _findPrefix(it->second, &value[index]);
+    std::shared_ptr<T> data = _findPrefix(it->second, value.substr(index));
     if (data == nullptr) {
         return node->is_end ? node->data : nullptr;
     }
@@ -265,7 +265,7 @@ bool RadixTree<T>::_insert(std::unique_ptr<Node>& root, Node& node, bool replace
 template <typename T>
 bool RadixTree<T>::_split(std::unique_ptr<Node>& root, Node& node, uint32_t index)
 {
-    Node new_node(&root->value[index], std::move(root->data), root->is_end);
+    Node new_node(root->value.substr(index), std::move(root->data), root->is_end);
 
     root->is_end = false;
     root->data = nullptr;
